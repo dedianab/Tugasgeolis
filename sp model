@@ -1,0 +1,116 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =========================
+# PARAMETER q (TIAP MODEL)
+# =========================
+q_sphere = 1.5
+q_hor = 1.0
+q_ver = 0.5
+
+# =========================
+# PARAMETER PER MODEL
+# =========================
+
+# SPHERE
+k1_s = -100
+k2_s = -50
+theta1_s = np.deg2rad(30)
+theta2_s = np.deg2rad(60)
+
+# HORIZONTAL CYLINDER
+k1_h = -80
+k2_h = -40
+theta1_h = np.deg2rad(20)
+theta2_h = np.deg2rad(50)
+
+# VERTICAL CYLINDER
+k1_v = -60
+k2_v = -30
+theta1_v = np.deg2rad(10)
+theta2_v = np.deg2rad(40)
+
+# =========================
+# VARIASI
+# =========================
+z_list = [2, 2.5, 3, 3.5, 4]
+x = np.linspace(-25, 25, 200)
+
+# =========================
+# MODEL
+# =========================
+def sphere_model(x, z, k, theta, q):
+    return k * q * (x*np.cos(theta) + z*np.sin(theta)) / (x**2 + z**2)**1.5
+
+def horizontal_cylinder(x, z, k, theta, q):
+    return k * q * (x*np.cos(theta) + z*np.sin(theta)) / (x**2 + z**2)
+
+def vertical_cylinder(x, z, k, theta, q):
+    return k * q * (x*np.cos(theta) + z*np.sin(theta)) / np.sqrt(x**2 + z**2)
+
+# =========================
+# FUNCTION PLOT
+# =========================
+def plot_model(model_func, q, k, theta, title):
+    plt.figure()
+    
+    theta_deg = np.rad2deg(theta)
+    
+    for z in z_list:
+        y = model_func(x, z, k, theta, q)
+        plt.plot(x, y, label=f'z = {z}')
+    
+    plt.title(f"{title}\n(k = {k}, θ = {theta_deg:.1f}°)")
+    plt.xlabel("Distance")
+    plt.ylabel("SP (mV)")
+    plt.legend()
+    plt.grid()
+
+# =========================
+# 12 GRAFIK
+# =========================
+
+# ===== SPHERE =====
+plot_model(sphere_model, q_sphere, k1_s, theta1_s, "Sphere (q=1.5): k1, θ1")
+plot_model(sphere_model, q_sphere, k1_s, theta2_s, "Sphere (q=1.5): k1, θ2")
+plot_model(sphere_model, q_sphere, k2_s, theta1_s, "Sphere (q=1.5): k2, θ1")
+plot_model(sphere_model, q_sphere, k2_s, theta2_s, "Sphere (q=1.5): k2, θ2")
+
+# ===== HORIZONTAL CYLINDER =====
+plot_model(horizontal_cylinder, q_hor, k1_h, theta1_h, "Horizontal Cylinder (q=1.0): k1, θ1")
+plot_model(horizontal_cylinder, q_hor, k1_h, theta2_h, "Horizontal Cylinder (q=1.0): k1, θ2")
+plot_model(horizontal_cylinder, q_hor, k2_h, theta1_h, "Horizontal Cylinder (q=1.0): k2, θ1")
+plot_model(horizontal_cylinder, q_hor, k2_h, theta2_h, "Horizontal Cylinder (q=1.0): k2, θ2")
+
+# ===== VERTICAL CYLINDER =====
+plot_model(vertical_cylinder, q_ver, k1_v, theta1_v, "Vertical Cylinder (q=0.5): k1, θ1")
+plot_model(vertical_cylinder, q_ver, k1_v, theta2_v, "Vertical Cylinder (q=0.5): k1, θ2")
+plot_model(vertical_cylinder, q_ver, k2_v, theta1_v, "Vertical Cylinder (q=0.5): k2, θ1")
+plot_model(vertical_cylinder, q_ver, k2_v, theta2_v, "Vertical Cylinder (q=0.5): k2, θ2")
+
+# =========================
+# GRAFIK KE-13 (GABUNGAN)
+# =========================
+plt.figure()
+
+z = 3  # nilai tengah
+
+plt.plot(x, sphere_model(x, z, k1_s, theta1_s, q_sphere), 
+         label=f"Sphere (k={k1_s}, θ={np.rad2deg(theta1_s):.0f}°)")
+
+plt.plot(x, horizontal_cylinder(x, z, k1_h, theta1_h, q_hor), 
+         label=f"Horizontal (k={k1_h}, θ={np.rad2deg(theta1_h):.0f}°)")
+
+plt.plot(x, vertical_cylinder(x, z, k1_v, theta1_v, q_ver), 
+         label=f"Vertical (k={k1_v}, θ={np.rad2deg(theta1_v):.0f}°)")
+
+plt.title("Comparison of 3 Models (z = 3)")
+plt.xlabel("Distance")
+plt.ylabel("SP (mV)")
+plt.legend()
+plt.grid()
+
+# =========================
+# TAMPILKAN SEMUA
+# =========================
+plt.show()
