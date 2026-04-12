@@ -1,0 +1,151 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =========================
+# DOMAIN
+# =========================
+x = np.linspace(-25, 25, 200)
+
+# =========================
+# PARAMETER q
+# =========================
+q_sphere = 1.5
+q_hor = 1.0
+q_ver = 0.5
+
+# =========================
+# MODEL FUNCTIONS
+# =========================
+def sphere_model(x, z, k, theta, q):
+    theta = np.deg2rad(theta)
+    return k*q*(x*np.cos(theta) + z*np.sin(theta)) / (x**2 + z**2)**1.5
+
+def horizontal_cylinder(x, z, k, theta, q):
+    theta = np.deg2rad(theta)
+    return k*q*(x*np.cos(theta) + z*np.sin(theta)) / (x**2 + z**2)
+
+def vertical_cylinder(x, z, k, theta, q):
+    theta = np.deg2rad(theta)
+    return k*q*(x*np.cos(theta) + z*np.sin(theta)) / np.sqrt(x**2 + z**2)
+
+# =========================
+# RMS FUNCTION
+# =========================
+def rms(obs, pred):
+    return np.sqrt(np.mean((obs - pred)**2))
+
+# =========================
+# FUNCTION: TRUE + NOISE + INVERSI
+# =========================
+def run_model(name, model_func, q, theta_range):
+    
+    # TRUE PARAMETER
+    k_true = -50
+    theta_true = theta_range[0]
+    z_true = 3
+
+    # TRUE DATA
+    data_true = model_func(x, z_true, k_true, theta_true, q)
+
+    # =========================
+    # NOISE (SUDAH DIBESARIN)
+    # =========================
+    np.random.seed(0)
+    noise = np.random.normal(0, 0.15, len(x))
+    data_noisy = data_true + noise
+
+    # =========================
+    # 1️⃣ TRUE DATA
+    # =========================
+    plt.figure()
+    plt.plot(x, data_true)
+    plt.title(f"True Data ({name})")
+    plt.xlabel("Distance")
+    plt.ylabel("SP (mV)")
+    plt.grid()
+    plt.show()
+
+    # =========================
+    # 2️⃣ NOISY DATA
+    # =========================
+    plt.figure()
+    plt.scatter(x, data_noisy, s=15)
+    plt.title(f"Observed Data ({name})")
+    plt.xlabel("Distance")
+    plt.ylabel("SP (mV)")
+    plt.grid()
+    plt.show()
+
+    # =========================
+    # INVERSI
+    # =========================
+    z_range = np.linspace(2, 4, 20)
+    k_range = [-100, -50]
+
+    best_rms = 999
+    best_param = None
+    best_curve = None
+
+    for z in z_range:
+        for k in k_range:
+            for theta in theta_range:
+                pred = model_func(x, z, k, theta, q)
+                error = rms(data_noisy, pred)
+
+                if error < best_rms:
+                    best_rms = error
+                    best_param = (z, k, theta)
+                    best_curve = pred
+
+    z_best, k_best, theta_best = best_param
+
+    # =========================
+    # 3️⃣ HASIL INVERSI
+    # =========================
+    plt.figure()
+    plt.scatter(x, data_noisy, s=15, color='black', label='Observed')
+    plt.plot(x, best_curve, color='red',
+             label=f"Best Fit (RMS={best_rms:.4f})")
+
+    plt.title(f"Inversion Result ({name})")
+    plt.xlabel("Distance")
+    plt.ylabel("SP (mV)")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    print(f"\n=== {name.upper()} ===")
+    print(f"RMS     : {best_rms:.4f}")
+    print(f"z       : {z_best:.2f}")
+    print(f"k       : {k_best}")
+    print(f"theta   : {theta_best}°")
+
+# =========================
+# JALANKAN SEMUA MODEL
+# =========================
+run_model("Sphere", sphere_model, q_sphere, [30, 60])
+run_model("Horizontal Cylinder", horizontal_cylinder, q_hor, [20, 50])
+run_model("Vertical Cylinder", vertical_cylinder, q_ver, [10, 40])
+
+# =========================
+# COMPARISON 3 MODEL
+# =========================
+z = 3
+k = -50
+theta = 30
+
+sphere = sphere_model(x, z, k, theta, q_sphere)
+hor = horizontal_cylinder(x, z, k, theta, q_hor)
+ver = vertical_cylinder(x, z, k, theta, q_ver)
+
+plt.figure()
+plt.plot(x, sphere, label="Sphere")
+plt.plot(x, hor, label="Horizontal Cylinder")
+plt.plot(x, ver, label="Vertical Cylinder")
+
+plt.title("Comparison of 3 Models")
+plt.xlabel("Distance")
+plt.ylabel("SP (mV)")
+plt.legend()
+plt.grid()
+plt.show()
